@@ -1,2 +1,2 @@
-# mi-primer-repo
-mi primer repo para subir mis mini proyectos en python y proximamente otros lenguajes
+# cibersecurity scripts by me
+mini proyectos y scripts python
