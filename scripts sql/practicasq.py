@@ -1,5 +1,5 @@
 import sqlite3
-import time
+
 conn = sqlite3.connect("mercado.db")
 cursor = conn.cursor()
 
