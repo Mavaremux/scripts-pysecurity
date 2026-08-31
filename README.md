@@ -1,2 +1,1 @@
-# cibersecurity scripts by me
-mini proyectos y scripts python
+Proyectos python mas grandes, scripts de ciberseguridad, tal vez algunas cosas extraidas de HTB o tryhackme o natas
